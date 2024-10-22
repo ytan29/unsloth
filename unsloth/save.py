@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from bitsandbytes.nn import Linear4bit as Bnb_Linear4bit
-from peft.tuners.lora import Linear4bit as Peft_Linear4bit
-from peft.tuners.lora import Linear as Peft_Linear
+HAS_BNB = False
+if HAS_BNB:
+    from bitsandbytes.nn import Linear4bit as Bnb_Linear4bit
+    from peft.tuners.lora import Linear4bit as Peft_Linear4bit
+    from peft.tuners.lora import Linear as Peft_Linear
 from typing import Optional, Callable, Union, List
 import torch
 import os

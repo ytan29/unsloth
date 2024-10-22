@@ -17,6 +17,9 @@ import triton.language as tl
 import torch
 from .utils import calculate_settings
 
+HAS_XPU = True
+device_type = "xpu" if HAS_XPU else "cuda"
+device_id = "xpu:0" if HAS_XPU else "cuda:0"
 
 @triton.jit
 def _rms_layernorm_forward(
@@ -137,8 +140,8 @@ class Fast_RMS_Layernorm(torch.autograd.Function):
         n_rows, n_cols = X.shape
         BLOCK_SIZE, num_warps = calculate_settings(n_cols)
 
-        Y = torch.empty((n_rows, n_cols), dtype = X.dtype, device = "cuda:0")
-        r = torch.empty(n_rows, dtype = torch.float32, device = "cuda:0")
+        Y = torch.empty((n_rows, n_cols), dtype = X.dtype, device = device_id)
+        r = torch.empty(n_rows, dtype = torch.float32, device = device_id)
 
         fx = _gemma_rms_layernorm_forward if gemma else _rms_layernorm_forward
         fx[(n_rows,)](
@@ -242,16 +245,16 @@ def test_rms_layernorm(
     bsz = 21, random_state = 3407, seqlen = 3341,
 ):
     from transformers.models.llama.modeling_llama import LlamaRMSNorm
-    layernorm = LlamaRMSNorm((dim,), eps = eps).to("cuda")
+    layernorm = LlamaRMSNorm((dim,), eps = eps).to(device_type)
     torch.cuda.manual_seed(random_state)
     torch.manual_seed(random_state)
     torch.nn.init.uniform_(layernorm.weight)
-    X = torch.randn((bsz, seqlen, dim), dtype = dtype, device = "cuda")
+    X = torch.randn((bsz, seqlen, dim), dtype = dtype, device = device_type)
     XX = X.clone()
     X .requires_grad_(True)
     XX.requires_grad_(True)
     Y = layernorm(X)
-    YY = torch.randn((bsz, seqlen, dim), dtype = dtype, device = "cuda", requires_grad = True)
+    YY = torch.randn((bsz, seqlen, dim), dtype = dtype, device = device_type, requires_grad = True)
     Y.backward(YY)
     correct_grad = X.grad.clone()
     # from unsloth.kernels import fast_rms_layernorm
@@ -264,7 +267,7 @@ pass
 def testing_suite_layernorm():
     for dim in [512, 1024, 2048]:
         for dtype in [torch.float16, torch.bfloat16]:
-            with torch.autocast(device_type = "cuda", dtype = dtype):
+            with torch.autocast(device_type = device_type, dtype = dtype):
                 for seqlen in [3341, 2048, 349]:
                     for random_state in [3407, 42]:
                         test_rms_layernorm(

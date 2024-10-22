@@ -68,7 +68,8 @@ pass
 def CohereAttention_fast_forward(
     self,
     hidden_states:        torch.Tensor,
-    causal_mask:          Optional[xformers.attn_bias.BlockDiagonalCausalMask] = None,
+    causal_mask:          Optional[bool] = None,
+    # causal_mask:          Optional[xformers.attn_bias.BlockDiagonalCausalMask] = None,
     attention_mask:       Optional[torch.Tensor] = None,
     position_ids:         Optional[torch.LongTensor] = None,
     past_key_value:       Optional[Tuple[torch.Tensor]] = None,
@@ -183,7 +184,8 @@ pass
 def CohereDecoderLayer_fast_forward(
     self,
     hidden_states:        torch.Tensor,
-    causal_mask:          Optional[xformers.attn_bias.BlockDiagonalCausalMask] = None,
+    causal_mask:          Optional[bool] = None,
+    # causal_mask:          Optional[xformers.attn_bias.BlockDiagonalCausalMask] = None,
     attention_mask:       Optional[torch.Tensor] = None,
     position_ids:         Optional[torch.LongTensor] = None,
     past_key_value:       Optional[Tuple[torch.Tensor]] = None,
